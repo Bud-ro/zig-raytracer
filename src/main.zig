@@ -3,7 +3,21 @@ const zm = @import("zmath");
 const Ray = @import("ray.zig").Ray;
 const color_util = @import("color_util.zig");
 
+pub fn hit_sphere(center: zm.F32x4, radius: f32, r: Ray) bool {
+    const oc = r.orig - center;
+    const a = zm.dot4(r.dir, r.dir);
+    const b = zm.f32x4s(2.0) * zm.dot4(oc, r.dir);
+    const c = zm.dot4(oc, oc) - zm.f32x4s(radius * radius);
+    const discriminant = b * b - zm.f32x4s(4) * a * c;
+
+    return (discriminant[0] >= 0); // All components should be the same
+}
+
 pub fn rayColor(r: Ray) zm.F32x4 {
+    if (hit_sphere(zm.F32x4{ 0, 0, -1, 0 }, 0.5, r)) {
+        return zm.F32x4{ 1, 0, 0, 0 }; // Return red if we hit the sphere
+    }
+
     const unit_direction: zm.F32x4 = zm.normalize4(r.dir);
     const a = zm.f32x4s(0.5) * (zm.f32x4s(unit_direction[1]) + zm.f32x4s(1.0));
     return (zm.f32x4s(1.0) - a) * zm.F32x4{ 1.0, 1.0, 1.0, 0 } + a * zm.F32x4{ 0.5, 0.7, 1.0, 0 };
@@ -29,8 +43,8 @@ pub fn main() !void {
     // -z pointing into the viewport, positive y upwards, and positive x pointing to the right
 
     const focal_length = 1.0;
-    const viewport_height = 2.0;
-    const viewport_width = viewport_height * (image_width / image_height);
+    const viewport_height: comptime_float = 2.0;
+    const viewport_width: comptime_float = viewport_height * (@as(comptime_float, @floatFromInt(image_width)) / @as(comptime_float, @floatFromInt(image_height)));
     const camera_center = zm.f32x4s(0); // (0,0,0)
 
     // Calculate the vectors across hte horizontal and down the vertical viewport edges
