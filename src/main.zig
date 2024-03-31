@@ -2,26 +2,15 @@ const std = @import("std");
 const zm = @import("zmath");
 const Ray = @import("ray.zig").Ray;
 const color_util = @import("color_util.zig");
+const hittable = @import("hittable/hittable.zig");
+const HittableList = @import("hittable/hittable_list.zig").HittableList;
+const Sphere = @import("hittable/sphere.zig").Sphere;
 
-pub fn hit_sphere(center: zm.F32x4, radius: f32, r: Ray) zm.F32x4 {
-    const oc = r.orig - center;
-    const a = zm.dot4(r.dir, r.dir);
-    const b = zm.f32x4s(2.0) * zm.dot4(oc, r.dir);
-    const c = zm.dot4(oc, oc) - zm.f32x4s(radius * radius);
-    const discriminant = b * b - zm.f32x4s(4) * a * c;
+pub fn rayColor(r: Ray, world: hittable.IHittable) zm.F32x4 {
+    var rec: hittable.HitRecord = undefined;
 
-    if (discriminant[0] < 0) {
-        return zm.f32x4s(-1.0);
-    } else {
-        return (-b - zm.sqrt(discriminant)) / (zm.f32x4s(2.0) * a);
-    }
-}
-
-pub fn rayColor(r: Ray) zm.F32x4 {
-    const t = hit_sphere(zm.F32x4{ 0, 0, -1, 0 }, 0.5, r);
-    if (t[0] > 0.0) {
-        const N = zm.normalize4(r.at(t) - zm.F32x4{ 0, 0, -1, 0 });
-        return zm.f32x4s(0.5) * (N + zm.f32x4s(1));
+    if (world.hit(r, zm.f32x4s(0), zm.f32x4s(std.math.inf(f32)), &rec)) {
+        return zm.f32x4s(0.5) * (rec.normal + zm.f32x4s(1));
     }
 
     const unit_direction: zm.F32x4 = zm.normalize4(r.dir);
@@ -38,11 +27,26 @@ pub fn main() !void {
     var bw_err = std.io.bufferedWriter(stderr_file);
     const stderr = bw_err.writer();
 
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer _ = gpa.deinit();
+
     // Image
 
     const aspect_ratio = 16.0 / 9.0;
     const image_width: comptime_int = 400;
     const image_height: comptime_int = @max(@as(comptime_int, @intFromFloat(@as(comptime_float, @floatFromInt(image_width)) / aspect_ratio)), 1); // Minimum image height is 1
+
+    // World
+
+    var world = HittableList.init(allocator);
+    defer world.deinit();
+
+    var sphere1: Sphere = .{ .center = zm.F32x4{ 0, 0, -1, 0 }, .radius = zm.f32x4s(0.5) };
+    try world.add(sphere1.interface());
+
+    var sphere2: Sphere = .{ .center = zm.F32x4{ 0, -100.5, -1, 0 }, .radius = zm.f32x4s(100) };
+    try world.add(sphere2.interface());
 
     // Camera
     // We use a right handed system with the basis vectors
@@ -77,7 +81,7 @@ pub fn main() !void {
             const ray_direction = pixel_center - camera_center;
             const r = Ray{ .orig = camera_center, .dir = ray_direction };
 
-            const color = rayColor(r);
+            const color = rayColor(r, world.interface());
             try color_util.writeColor(stdout, color);
         }
     }
