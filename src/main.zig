@@ -3,19 +3,25 @@ const zm = @import("zmath");
 const Ray = @import("ray.zig").Ray;
 const color_util = @import("color_util.zig");
 
-pub fn hit_sphere(center: zm.F32x4, radius: f32, r: Ray) bool {
+pub fn hit_sphere(center: zm.F32x4, radius: f32, r: Ray) zm.F32x4 {
     const oc = r.orig - center;
     const a = zm.dot4(r.dir, r.dir);
     const b = zm.f32x4s(2.0) * zm.dot4(oc, r.dir);
     const c = zm.dot4(oc, oc) - zm.f32x4s(radius * radius);
     const discriminant = b * b - zm.f32x4s(4) * a * c;
 
-    return (discriminant[0] >= 0); // All components should be the same
+    if (discriminant[0] < 0) {
+        return zm.f32x4s(-1.0);
+    } else {
+        return (-b - zm.sqrt(discriminant)) / (zm.f32x4s(2.0) * a);
+    }
 }
 
 pub fn rayColor(r: Ray) zm.F32x4 {
-    if (hit_sphere(zm.F32x4{ 0, 0, -1, 0 }, 0.5, r)) {
-        return zm.F32x4{ 1, 0, 0, 0 }; // Return red if we hit the sphere
+    const t = hit_sphere(zm.F32x4{ 0, 0, -1, 0 }, 0.5, r);
+    if (t[0] > 0.0) {
+        const N = zm.normalize4(r.at(t) - zm.F32x4{ 0, 0, -1, 0 });
+        return zm.f32x4s(0.5) * (N + zm.f32x4s(1));
     }
 
     const unit_direction: zm.F32x4 = zm.normalize4(r.dir);
