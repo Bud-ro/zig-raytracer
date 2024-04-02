@@ -1,5 +1,5 @@
 const zm = @import("zmath");
-const Ray = @import("../ray.zig").Ray;
+const Ray = @import("../ray.zig");
 const Interval = @import("../interval.zig");
 
 pub const HitRecord = struct {

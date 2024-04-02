@@ -1,11 +1,11 @@
 const std = @import("std");
 const zm = @import("zmath");
-const Ray = @import("ray.zig").Ray;
+const Ray = @import("ray.zig");
 const Interval = @import("interval.zig");
 const color_util = @import("color_util.zig");
 const hittable = @import("hittable/hittable.zig");
-const HittableList = @import("hittable/hittable_list.zig").HittableList;
-const Sphere = @import("hittable/sphere.zig").Sphere;
+const HittableList = @import("hittable/hittable_list.zig");
+const Sphere = @import("hittable/sphere.zig");
 
 pub fn rayColor(r: Ray, world: hittable.IHittable) zm.F32x4 {
     var rec: hittable.HitRecord = undefined;
