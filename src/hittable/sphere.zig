@@ -1,5 +1,6 @@
 const zm = @import("zmath");
 const hittable = @import("hittable.zig");
+const Interval = @import("../interval.zig");
 const Ray = @import("../ray.zig").Ray;
 
 pub const Sphere = struct {
@@ -13,7 +14,7 @@ pub const Sphere = struct {
         };
     }
 
-    pub fn hit(self_opaque: *anyopaque, r: Ray, t_min: zm.F32x4, t_max: zm.F32x4, rec: *hittable.HitRecord) bool {
+    pub fn hit(self_opaque: *anyopaque, r: Ray, interval: Interval, rec: *hittable.HitRecord) bool {
         var self = @as(*Sphere, @ptrCast(@alignCast(self_opaque)));
 
         const oc = r.orig - self.center;
@@ -28,10 +29,10 @@ pub const Sphere = struct {
         const sqrtd = zm.sqrt(discriminant);
 
         // Find the nearest root in acceptable range
-        var root = (-half_b - sqrtd) / a;
-        if (zm.all(root <= t_min, 3) or zm.all(t_max <= root, 3)) {
-            root = (-half_b + sqrtd) / a;
-            if (zm.all(root <= t_min, 3) or zm.all(t_max <= root, 3)) {
+        var root = ((-half_b - sqrtd) / a)[0];
+        if (!interval.surrounds(root)) {
+            root = ((-half_b + sqrtd) / a)[0];
+            if (!interval.surrounds(root)) {
                 return false;
             }
         }

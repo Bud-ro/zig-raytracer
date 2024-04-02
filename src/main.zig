@@ -1,6 +1,7 @@
 const std = @import("std");
 const zm = @import("zmath");
 const Ray = @import("ray.zig").Ray;
+const Interval = @import("interval.zig");
 const color_util = @import("color_util.zig");
 const hittable = @import("hittable/hittable.zig");
 const HittableList = @import("hittable/hittable_list.zig").HittableList;
@@ -9,7 +10,7 @@ const Sphere = @import("hittable/sphere.zig").Sphere;
 pub fn rayColor(r: Ray, world: hittable.IHittable) zm.F32x4 {
     var rec: hittable.HitRecord = undefined;
 
-    if (world.hit(r, zm.f32x4s(0), zm.f32x4s(std.math.inf(f32)), &rec)) {
+    if (world.hit(r, Interval.init(0.0, std.math.inf(f32)), &rec)) {
         return zm.f32x4s(0.5) * (rec.normal + zm.f32x4s(1));
     }
 
@@ -42,6 +43,7 @@ pub fn main() !void {
     var world = HittableList.init(allocator);
     defer world.deinit();
 
+    // TODO: These copy so maybe pass in pointers or construct in-place (emplace) instead?
     var sphere1: Sphere = .{ .center = zm.F32x4{ 0, 0, -1, 0 }, .radius = zm.f32x4s(0.5) };
     try world.add(sphere1.interface());
 

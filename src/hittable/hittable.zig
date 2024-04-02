@@ -1,10 +1,11 @@
 const zm = @import("zmath");
 const Ray = @import("../ray.zig").Ray;
+const Interval = @import("../interval.zig");
 
 pub const HitRecord = struct {
     p: zm.F32x4,
     normal: zm.F32x4,
-    t: zm.F32x4,
+    t: f32,
     front_face: bool,
 
     /// Sets the hit record normal vector
@@ -23,9 +24,9 @@ pub const IHittable = struct {
     // The type erased pointer to the hittable implementation
     impl: *anyopaque,
 
-    hitFn: *const fn (*anyopaque, Ray, zm.F32x4, zm.F32x4, *HitRecord) bool,
+    hitFn: *const fn (*anyopaque, Ray, Interval, *HitRecord) bool,
 
-    pub fn hit(iface: *const IHittable, r: Ray, t_min: zm.F32x4, t_max: zm.F32x4, rec: *HitRecord) bool {
-        return iface.hitFn(iface.impl, r, t_min, t_max, rec);
+    pub fn hit(iface: *const IHittable, r: Ray, interval: Interval, rec: *HitRecord) bool {
+        return iface.hitFn(iface.impl, r, interval, rec);
     }
 };
