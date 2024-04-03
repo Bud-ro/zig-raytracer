@@ -1,6 +1,10 @@
 const std = @import("std");
 const zm = @import("zmath");
 
+fn linear_to_gamma(linear_component: f32) f32 {
+    return std.math.sqrt(linear_component);
+}
+
 pub fn writeColor(out: anytype, pixel_color: zm.F32x4, samples_per_pixel: usize) !void {
     const r = pixel_color[0];
     const g = pixel_color[1];
@@ -14,8 +18,8 @@ pub fn writeColor(out: anytype, pixel_color: zm.F32x4, samples_per_pixel: usize)
     const ib: f32 = std.math.clamp(b * scale, 0.000, 0.999);
 
     try out.print("{} {} {}\n", .{
-        @as(i16, @intFromFloat(256 * ir)),
-        @as(i16, @intFromFloat(256 * ig)),
-        @as(i16, @intFromFloat(256 * ib)),
+        @as(i16, @intFromFloat(256 * linear_to_gamma(ir))),
+        @as(i16, @intFromFloat(256 * linear_to_gamma(ig))),
+        @as(i16, @intFromFloat(256 * linear_to_gamma(ib))),
     });
 }
