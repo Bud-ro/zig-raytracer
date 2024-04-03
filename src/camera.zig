@@ -16,6 +16,8 @@ const Camera = @This();
 image_width: usize,
 /// Aspect Ratio
 aspect_ratio: f32,
+/// Samples Per Pixel
+samples_per_pixel: usize,
 
 // These should all be treated as private to the camera instance
 /// Height of the image
@@ -28,6 +30,8 @@ pixel00_loc: zm.F32x4 = undefined,
 pixel_delta_u: zm.F32x4 = undefined,
 /// Offset to pixel below
 pixel_delta_v: zm.F32x4 = undefined,
+/// Xorshiro Random Number Generator
+rnd: std.rand.Xoshiro256 = undefined,
 
 pub fn render(self: *Camera, world: hittable.IHittable) !void {
     initialize(self);
@@ -46,12 +50,14 @@ pub fn render(self: *Camera, world: hittable.IHittable) !void {
         try stderr.print("\rScanlines remaining {} ", .{self.image_height - j});
         try bw_err.flush();
         for (0..self.image_width) |i| {
-            const pixel_center = self.pixel00_loc + (zm.f32x4s(@floatFromInt(i)) * self.pixel_delta_u) + (zm.f32x4s(@floatFromInt(j)) * self.pixel_delta_v);
-            const ray_direction = pixel_center - self.center;
-            const r = Ray{ .orig = self.center, .dir = ray_direction };
+            var pixel_color = zm.f32x4s(0.0);
+            for (0..self.samples_per_pixel) |sample| {
+                _ = sample;
+                var r = get_ray(self, i, j);
+                pixel_color += ray_color(r, world);
+            }
 
-            const color = rayColor(r, world);
-            try color_util.writeColor(stdout, color);
+            try color_util.writeColor(stdout, pixel_color, self.samples_per_pixel);
         }
     }
 
@@ -61,6 +67,8 @@ pub fn render(self: *Camera, world: hittable.IHittable) !void {
 }
 
 fn initialize(self: *Camera) void {
+    self.rnd = std.rand.DefaultPrng.init(@intCast(std.time.microTimestamp()));
+
     self.image_height = @max(@as(usize, @intFromFloat(@as(f32, @floatFromInt(self.image_width)) / self.aspect_ratio)), 1); // Minimum image height is 1
 
     self.center = zm.f32x4s(0);
@@ -82,7 +90,24 @@ fn initialize(self: *Camera) void {
     self.pixel00_loc = viewport_upper_left + (self.pixel_delta_u + self.pixel_delta_v) / zm.f32x4s(2);
 }
 
-fn rayColor(r: Ray, world: hittable.IHittable) zm.F32x4 {
+fn get_ray(self: *Camera, i: usize, j: usize) Ray {
+    const pixel_center = self.pixel00_loc + (zm.f32x4s(@floatFromInt(i)) * self.pixel_delta_u) + (zm.f32x4s(@floatFromInt(j)) * self.pixel_delta_v);
+    const pixel_sample = pixel_center + pixel_sample_square(self);
+
+    var ray_origin = self.center;
+    const ray_direction = pixel_sample - ray_origin;
+
+    return Ray{ .orig = ray_origin, .dir = ray_direction };
+}
+
+fn pixel_sample_square(self: *Camera) zm.F32x4 {
+    const px = zm.f32x4s(-0.5 + self.rnd.random().float(f32));
+    const py = zm.f32x4s(-0.5 + self.rnd.random().float(f32));
+
+    return (px * self.pixel_delta_u) + (py * self.pixel_delta_v);
+}
+
+fn ray_color(r: Ray, world: hittable.IHittable) zm.F32x4 {
     var rec: hittable.HitRecord = undefined;
 
     if (world.hit(r, Interval.init(0.0, std.math.inf(f32)), &rec)) {

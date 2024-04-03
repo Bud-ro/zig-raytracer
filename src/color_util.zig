@@ -1,9 +1,21 @@
+const std = @import("std");
 const zm = @import("zmath");
 
-pub fn writeColor(out: anytype, pixel_color: zm.F32x4) !void {
-    const ir: i16 = @intFromFloat(255.999 * pixel_color[0]);
-    const ig: i16 = @intFromFloat(255.999 * pixel_color[1]);
-    const ib: i16 = @intFromFloat(255.999 * pixel_color[2]);
+pub fn writeColor(out: anytype, pixel_color: zm.F32x4, samples_per_pixel: usize) !void {
+    const r = pixel_color[0];
+    const g = pixel_color[1];
+    const b = pixel_color[2];
 
-    try out.print("{} {} {}\n", .{ ir, ig, ib });
+    // Scale the pixel color by the number of samples
+    const scale: f32 = 1.0 / @as(f32, @floatFromInt(samples_per_pixel));
+
+    const ir: f32 = std.math.clamp(r * scale, 0.000, 0.999);
+    const ig: f32 = std.math.clamp(g * scale, 0.000, 0.999);
+    const ib: f32 = std.math.clamp(b * scale, 0.000, 0.999);
+
+    try out.print("{} {} {}\n", .{
+        @as(i16, @intFromFloat(256 * ir)),
+        @as(i16, @intFromFloat(256 * ig)),
+        @as(i16, @intFromFloat(256 * ib)),
+    });
 }

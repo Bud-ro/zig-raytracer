@@ -20,7 +20,7 @@ pub fn main() !void {
     try world.add(sphere2.interface());
 
     const aspect_ratio = 16.0 / 9.0;
-    var camera = Camera{ .aspect_ratio = aspect_ratio, .image_width = 400 };
+    var camera = Camera{ .aspect_ratio = aspect_ratio, .image_width = 400, .samples_per_pixel = 100 };
 
     try camera.render(world.interface());
 }
