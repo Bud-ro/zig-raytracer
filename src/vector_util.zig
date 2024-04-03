@@ -26,15 +26,15 @@ pub fn random_on_hemisphere(rnd: std.rand.Random, normal: zm.F32x4) zm.F32x4 {
 
 /// Returns a random unit vector
 pub fn random_unit_vector(rnd: std.rand.Random) zm.F32x4 {
-    return zm.normalize4(random_in_unit_sphere(rnd));
+    return zm.normalize4(clamped_random_vec(rnd, -1.0, 1.0));
 }
 
-/// Repeatedly generates Vec3s until one is in the unit sphere
-pub fn random_in_unit_sphere(rnd: std.rand.Random) zm.F32x4 {
-    while (true) {
-        const p = clamped_random_vec(rnd, -1.0, 1.0);
-        if (zm.all(zm.abs(p) < zm.f32x4s(1.0), 4)) {
-            return p;
-        }
-    }
-}
+// /// Repeatedly generates Vec3s until one is in the unit sphere
+// pub fn random_in_unit_sphere(rnd: std.rand.Random) zm.F32x4 {
+//     while (true) {
+//         const p = clamped_random_vec(rnd, -1.0, 1.0);
+//         if (zm.all(zm.abs(p) < zm.f32x4s(1.0), 4)) {
+//             return p;
+//         }
+//     }
+// }
