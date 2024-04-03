@@ -115,7 +115,7 @@ fn ray_color(self: *Camera, r: Ray, depth: usize, world: hittable.IHittable) zm.
         return zm.F32x4{ 0, 0, 0, 0 };
     }
 
-    if (world.hit(r, Interval.init(0.0, std.math.inf(f32)), &rec)) {
+    if (world.hit(r, Interval.init(0.001, std.math.inf(f32)), &rec)) {
         const direction = vector_util.random_on_hemisphere(self.rnd, rec.normal);
         return zm.f32x4s(0.5) * ray_color(self, Ray{ .orig = rec.p, .dir = direction }, depth - 1, world);
     }
