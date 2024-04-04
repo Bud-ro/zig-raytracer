@@ -1,10 +1,12 @@
 const zm = @import("zmath");
 const Ray = @import("../ray.zig");
 const Interval = @import("../interval.zig");
+const IMaterial = @import("../material/material.zig");
 
 pub const HitRecord = struct {
     p: zm.F32x4,
     normal: zm.F32x4,
+    mat: IMaterial,
     t: f32,
     front_face: bool,
 

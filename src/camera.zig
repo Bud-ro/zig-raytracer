@@ -9,6 +9,7 @@ const Ray = @import("ray.zig");
 const Interval = @import("interval.zig");
 const color_util = @import("color_util.zig");
 const vector_util = @import("vector_util.zig");
+const IMaterial = @import("/material/material.zig");
 
 const Camera = @This();
 
@@ -116,8 +117,13 @@ fn ray_color(self: *Camera, r: Ray, depth: usize, world: hittable.IHittable) zm.
     }
 
     if (world.hit(r, Interval.init(0.001, std.math.inf(f32)), &rec)) {
-        const direction = rec.normal + vector_util.random_unit_vector(self.rnd);
-        return zm.f32x4s(0.5) * ray_color(self, Ray{ .orig = rec.p, .dir = direction }, depth - 1, world);
+        var scattered: Ray = undefined;
+        var attenuation: zm.F32x4 = undefined;
+
+        if (rec.mat.scatter(r, &rec, &attenuation, &scattered)) {
+            return attenuation * ray_color(self, scattered, depth - 1, world);
+        }
+        return zm.f32x4s(0);
     }
 
     const unit_direction: zm.F32x4 = zm.normalize4(r.dir);

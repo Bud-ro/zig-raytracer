@@ -29,6 +29,15 @@ pub fn random_unit_vector(rnd: std.rand.Random) zm.F32x4 {
     return zm.normalize4(clamped_random_vec(rnd, -1.0, 1.0));
 }
 
+pub fn near_zero(vec: zm.F32x4) bool {
+    const s: comptime_float = 1e-8;
+    return (zm.all(vec < zm.f32x4s(s), 4));
+}
+
+pub fn reflect(v: zm.F32x4, n: zm.F32x4) zm.F32x4 {
+    return v - zm.f32x4s(2) * zm.dot4(v, n) * n;
+}
+
 // /// Repeatedly generates Vec3s until one is in the unit sphere
 // pub fn random_in_unit_sphere(rnd: std.rand.Random) zm.F32x4 {
 //     while (true) {

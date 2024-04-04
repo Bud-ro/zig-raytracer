@@ -2,9 +2,11 @@ const zm = @import("zmath");
 const hittable = @import("hittable.zig");
 const Interval = @import("../interval.zig");
 const Ray = @import("../ray.zig");
+const IMaterial = @import("../material/material.zig");
 
 center: zm.F32x4,
 radius: zm.F32x4, // All 4 components must be the same
+mat: IMaterial,
 
 const Sphere = @This();
 
@@ -42,6 +44,7 @@ pub fn hit(self_opaque: *anyopaque, r: Ray, interval: Interval, rec: *hittable.H
     rec.*.p = r.at(rec.*.t);
     const outward_normal = (rec.*.p - self.center) / self.radius;
     rec.*.set_face_normal(r, outward_normal);
+    rec.*.mat = self.mat;
 
     return true;
 }
