@@ -39,7 +39,7 @@ pub fn main() !void {
     try world.add(right_sphere.interface());
 
     const aspect_ratio = 16.0 / 9.0;
-    var camera = Camera{ .aspect_ratio = aspect_ratio, .image_width = 400, .samples_per_pixel = 100, .max_depth = 50, .rnd = rnd.random(), .vfov = 20, .lookfrom = zm.F32x4{ -2, 2, 1, 0 }, .lookat = zm.F32x4{ 0, 0, -1, 0 } };
+    var camera = Camera{ .aspect_ratio = aspect_ratio, .image_width = 400, .samples_per_pixel = 100, .max_depth = 50, .rnd = rnd.random(), .vfov = 20, .lookfrom = zm.F32x4{ -2, 2, 1, 0 }, .lookat = zm.F32x4{ 0, 0, -1, 0 }, .defocus_angle = 10.0, .focus_dist = 3.4 };
 
     try camera.render(world.interface());
 }

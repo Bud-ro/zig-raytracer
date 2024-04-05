@@ -29,6 +29,16 @@ pub fn random_unit_vector(rnd: std.rand.Random) zm.F32x4 {
     return zm.normalize4(clamped_random_vec(rnd, -1.0, 1.0));
 }
 
+/// Returns a random unit vector
+pub fn random_in_unit_disk(rnd: std.rand.Random) zm.F32x4 {
+    while (true) {
+        const p = zm.F32x4{ rand_range(rnd, -1, 1), rand_range(rnd, -1, 1), 0, 0 };
+        if (zm.dot4(p, p)[0] < 1) {
+            return p;
+        }
+    }
+}
+
 pub fn near_zero(vec: zm.F32x4) bool {
     const s: comptime_float = 1e-8;
     return (zm.all(vec < zm.f32x4s(s), 4));

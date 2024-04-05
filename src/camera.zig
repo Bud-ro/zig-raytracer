@@ -32,6 +32,10 @@ lookfrom: zm.F32x4 = undefined,
 lookat: zm.F32x4 = undefined,
 /// Camera-relative "up" direction
 vup: zm.F32x4 = zm.F32x4{ 0, 1, 0, 0 },
+/// Variation angle of rays through each pixel
+defocus_angle: f32 = 0,
+/// Distance from camera lookfrom point to plane of perfect focus
+focus_dist: f32 = 10,
 
 // These should all be treated as private to the camera instance
 /// Height of the image
@@ -48,6 +52,10 @@ pixel_delta_v: zm.F32x4 = undefined,
 u: zm.F32x4 = undefined,
 v: zm.F32x4 = undefined,
 w: zm.F32x4 = undefined,
+// Defocus Disk horizontal radius
+defocus_disk_u: zm.F32x4 = undefined,
+// Defocus Disk vertical radius
+defocus_disk_v: zm.F32x4 = undefined,
 
 pub fn render(self: *Camera, world: hittable.IHittable) !void {
     initialize(self);
@@ -88,10 +96,9 @@ fn initialize(self: *Camera) void {
     self.center = self.lookfrom;
 
     // Determine viewport dimensions
-    const focal_length: f32 = zm.length4(self.lookfrom - self.lookat)[0];
     const theta = std.math.degreesToRadians(f32, self.vfov);
     const h = @tan(theta / 2.0);
-    const viewport_height = 2.0 * h * focal_length;
+    const viewport_height = 2.0 * h * self.focus_dist;
     const viewport_width: f32 = viewport_height * (@as(f32, @floatFromInt(self.image_width)) / @as(f32, @floatFromInt(self.image_height)));
 
     // Calculate the u,v,w unit basis vectors for the camera coordinate frame
@@ -108,18 +115,32 @@ fn initialize(self: *Camera) void {
     self.pixel_delta_v = viewport_v / zm.f32x4s(@as(f32, @floatFromInt(self.image_height)));
 
     // Calculate the location of the upper left pixel
-    const viewport_upper_left = self.center - (zm.f32x4s(focal_length) * self.w) - (viewport_u + viewport_v) / zm.f32x4s(2);
+    const viewport_upper_left = self.center - (zm.f32x4s(self.focus_dist) * self.w) - (viewport_u + viewport_v) / zm.f32x4s(2);
     self.pixel00_loc = viewport_upper_left + (self.pixel_delta_u + self.pixel_delta_v) / zm.f32x4s(2);
+
+    // Calculate the camera defocus disk basis vectors
+    const defocus_radius = zm.f32x4s(self.focus_dist * @tan(std.math.degreesToRadians(f32, self.defocus_angle / 2.0)));
+    self.defocus_disk_u = self.u * defocus_radius;
+    self.defocus_disk_v = self.v * defocus_radius;
 }
 
 fn get_ray(self: *Camera, i: usize, j: usize) Ray {
+    // Get a randomly-sampled camera ray for the pixel at location i,j, originating
+    // from the camera focus
+
     const pixel_center = self.pixel00_loc + (zm.f32x4s(@floatFromInt(i)) * self.pixel_delta_u) + (zm.f32x4s(@floatFromInt(j)) * self.pixel_delta_v);
     const pixel_sample = pixel_center + pixel_sample_square(self);
 
-    var ray_origin = self.center;
+    var ray_origin = if (self.defocus_angle <= 0) self.center else defocus_disk_sample(self);
     const ray_direction = pixel_sample - ray_origin;
 
     return Ray{ .orig = ray_origin, .dir = ray_direction };
+}
+
+pub fn defocus_disk_sample(self: *Camera) zm.F32x4 {
+    // Returns a random point in the camera defocus disk
+    const p = vector_util.random_in_unit_disk(self.rnd);
+    return self.center + (zm.f32x4s(p[0]) * self.defocus_disk_u) + (zm.f32x4s(p[1]) * self.defocus_disk_v);
 }
 
 fn pixel_sample_square(self: *Camera) zm.F32x4 {
