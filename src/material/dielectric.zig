@@ -20,17 +20,20 @@ pub fn scatter(self_opaque: *anyopaque, r_in: Ray, rec: *hittable.HitRecord, att
     var self = @as(*Dielectric, @ptrCast(@alignCast(self_opaque)));
 
     attenuation.* = zm.F32x4{ 1.0, 1.0, 1.0, 0.0 };
-
-    var refraction_ratio: f32 = 0.0;
-    if (rec.front_face) {
-        refraction_ratio = (1.0 / self.ir);
-    } else {
-        refraction_ratio = self.ir;
-    }
+    const refraction_ratio = zm.f32x4s(if (rec.front_face) (1.0 / self.ir) else self.ir);
 
     const unit_direction = zm.normalize4(r_in.dir);
-    const refracted = vector_util.refract(unit_direction, rec.normal, refraction_ratio);
 
-    scattered.* = Ray{ .orig = rec.p, .dir = refracted };
+    const cos_theta = @min(zm.dot4(-unit_direction, rec.normal), zm.f32x4s(1.0));
+    const sin_theta = @sqrt(zm.f32x4s(1.0) - zm.dot4(cos_theta, cos_theta));
+
+    const cannot_refract = zm.all(refraction_ratio * sin_theta > zm.f32x4s(1.0), 4);
+
+    const direction = if (cannot_refract)
+        vector_util.reflect(unit_direction, rec.normal)
+    else
+        vector_util.refract(unit_direction, rec.normal, refraction_ratio);
+
+    scattered.* = Ray{ .orig = rec.p, .dir = direction };
     return true;
 }

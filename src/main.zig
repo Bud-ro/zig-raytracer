@@ -18,9 +18,9 @@ pub fn main() !void {
     defer world.deinit();
 
     var material_ground = Lambertian{ .albedo = zm.F32x4{ 0.8, 0.8, 0.0, 0.0 }, .rnd = rnd.random() };
-    var material_center = Dielectric{ .ir = 1.5 };
+    var material_center = Lambertian{ .albedo = zm.F32x4{ 0.1, 0.2, 0.5, 0.0 }, .rnd = rnd.random() };
     var material_left = Dielectric{ .ir = 1.5 };
-    var material_right = Metal{ .albedo = zm.F32x4{ 0.8, 0.6, 0.2, 0.0 }, .fuzz = 1.0, .rnd = rnd.random() };
+    var material_right = Metal{ .albedo = zm.F32x4{ 0.8, 0.6, 0.2, 0.0 }, .fuzz = 0.0, .rnd = rnd.random() };
 
     // TODO: These copy so maybe pass in pointers or construct in-place (emplace) instead?
     var ground = Sphere{ .center = zm.F32x4{ 0.0, -100.5, -1.0, 0.0 }, .radius = zm.f32x4s(100.0), .mat = material_ground.interface() };

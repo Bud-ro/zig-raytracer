@@ -38,9 +38,9 @@ pub fn reflect(v: zm.F32x4, n: zm.F32x4) zm.F32x4 {
     return v - zm.f32x4s(2) * zm.dot4(v, n) * n;
 }
 
-pub fn refract(uv: zm.F32x4, n: zm.F32x4, etai_over_etat: f32) zm.F32x4 {
+pub fn refract(uv: zm.F32x4, n: zm.F32x4, etai_over_etat: zm.F32x4) zm.F32x4 {
     const cos_theta = @min(zm.dot4(-uv, n), zm.f32x4s(1.0));
-    const r_out_perp = zm.f32x4s(etai_over_etat) * (uv + cos_theta * n);
+    const r_out_perp = etai_over_etat * (uv + cos_theta * n);
     const r_out_parallel = -@sqrt(@fabs(zm.f32x4s(1.0) - zm.dot4(r_out_perp, r_out_perp))) * n;
     return r_out_perp + r_out_parallel;
 }
