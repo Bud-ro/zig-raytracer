@@ -38,12 +38,9 @@ pub fn reflect(v: zm.F32x4, n: zm.F32x4) zm.F32x4 {
     return v - zm.f32x4s(2) * zm.dot4(v, n) * n;
 }
 
-// /// Repeatedly generates Vec3s until one is in the unit sphere
-// pub fn random_in_unit_sphere(rnd: std.rand.Random) zm.F32x4 {
-//     while (true) {
-//         const p = clamped_random_vec(rnd, -1.0, 1.0);
-//         if (zm.all(zm.abs(p) < zm.f32x4s(1.0), 4)) {
-//             return p;
-//         }
-//     }
-// }
+pub fn refract(uv: zm.F32x4, n: zm.F32x4, etai_over_etat: f32) zm.F32x4 {
+    const cos_theta = @min(zm.dot4(-uv, n), zm.f32x4s(1.0));
+    const r_out_perp = zm.f32x4s(etai_over_etat) * (uv + cos_theta * n);
+    const r_out_parallel = -@sqrt(@fabs(zm.f32x4s(1.0) - zm.dot4(r_out_perp, r_out_perp))) * n;
+    return r_out_perp + r_out_parallel;
+}

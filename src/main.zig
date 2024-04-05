@@ -5,6 +5,7 @@ const HittableList = @import("hittable/hittable_list.zig");
 const Sphere = @import("hittable/sphere.zig");
 const Lambertian = @import("material/lambertian.zig");
 const Metal = @import("material/metal.zig");
+const Dielectric = @import("material/dielectric.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -17,8 +18,8 @@ pub fn main() !void {
     defer world.deinit();
 
     var material_ground = Lambertian{ .albedo = zm.F32x4{ 0.8, 0.8, 0.0, 0.0 }, .rnd = rnd.random() };
-    var material_center = Lambertian{ .albedo = zm.F32x4{ 0.7, 0.3, 0.3, 0.0 }, .rnd = rnd.random() };
-    var material_left = Metal{ .albedo = zm.F32x4{ 0.8, 0.8, 0.8, 0.0 }, .fuzz = 0.3, .rnd = rnd.random() };
+    var material_center = Dielectric{ .ir = 1.5 };
+    var material_left = Dielectric{ .ir = 1.5 };
     var material_right = Metal{ .albedo = zm.F32x4{ 0.8, 0.6, 0.2, 0.0 }, .fuzz = 1.0, .rnd = rnd.random() };
 
     // TODO: These copy so maybe pass in pointers or construct in-place (emplace) instead?
