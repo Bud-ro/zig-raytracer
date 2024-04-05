@@ -24,6 +24,8 @@ samples_per_pixel: usize,
 rnd: std.rand.Random = undefined,
 /// Max number of bounces
 max_depth: usize = 10,
+/// Vertical view angle
+vfov: f32 = 90,
 
 // These should all be treated as private to the camera instance
 /// Height of the image
@@ -76,7 +78,9 @@ fn initialize(self: *Camera) void {
     self.center = zm.f32x4s(0);
 
     const focal_length: comptime_float = 1.0;
-    const viewport_height: comptime_float = 2.0;
+    const theta = std.math.degreesToRadians(f32, self.vfov);
+    const h = @tan(theta / 2.0);
+    const viewport_height = 2.0 * h * focal_length;
     const viewport_width: f32 = viewport_height * (@as(f32, @floatFromInt(self.image_width)) / @as(f32, @floatFromInt(self.image_height)));
 
     // Calculate the vectors across hte horizontal and down the vertical viewport edges
