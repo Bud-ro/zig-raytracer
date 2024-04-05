@@ -26,6 +26,12 @@ rnd: std.rand.Random = undefined,
 max_depth: usize = 10,
 /// Vertical view angle
 vfov: f32 = 90,
+/// Point camera is looking from
+lookfrom: zm.F32x4 = undefined,
+/// Point camera is looking at
+lookat: zm.F32x4 = undefined,
+/// Camera-relative "up" direction
+vup: zm.F32x4 = zm.F32x4{ 0, 1, 0, 0 },
 
 // These should all be treated as private to the camera instance
 /// Height of the image
@@ -38,6 +44,10 @@ pixel00_loc: zm.F32x4 = undefined,
 pixel_delta_u: zm.F32x4 = undefined,
 /// Offset to pixel below
 pixel_delta_v: zm.F32x4 = undefined,
+// Camera frame basis vectors
+u: zm.F32x4 = undefined,
+v: zm.F32x4 = undefined,
+w: zm.F32x4 = undefined,
 
 pub fn render(self: *Camera, world: hittable.IHittable) !void {
     initialize(self);
@@ -75,24 +85,30 @@ pub fn render(self: *Camera, world: hittable.IHittable) !void {
 fn initialize(self: *Camera) void {
     self.image_height = @max(@as(usize, @intFromFloat(@as(f32, @floatFromInt(self.image_width)) / self.aspect_ratio)), 1); // Minimum image height is 1
 
-    self.center = zm.f32x4s(0);
+    self.center = self.lookfrom;
 
-    const focal_length: comptime_float = 1.0;
+    // Determine viewport dimensions
+    const focal_length: f32 = zm.length4(self.lookfrom - self.lookat)[0];
     const theta = std.math.degreesToRadians(f32, self.vfov);
     const h = @tan(theta / 2.0);
     const viewport_height = 2.0 * h * focal_length;
     const viewport_width: f32 = viewport_height * (@as(f32, @floatFromInt(self.image_width)) / @as(f32, @floatFromInt(self.image_height)));
 
+    // Calculate the u,v,w unit basis vectors for the camera coordinate frame
+    self.w = zm.normalize4(self.lookfrom - self.lookat);
+    self.u = zm.normalize4(zm.cross3(self.vup, self.w));
+    self.v = zm.cross3(self.w, self.u);
+
     // Calculate the vectors across hte horizontal and down the vertical viewport edges
-    const viewport_u = zm.F32x4{ viewport_width, 0, 0, 0 };
-    const viewport_v = zm.F32x4{ 0, -viewport_height, 0, 0 };
+    const viewport_u = zm.f32x4s(viewport_width) * self.u;
+    const viewport_v = zm.f32x4s(-viewport_height) * self.v;
 
     // Calculuate the horizontal and vertical delta vectors from pixel to pixel
     self.pixel_delta_u = viewport_u / zm.f32x4s(@as(f32, @floatFromInt(self.image_width)));
     self.pixel_delta_v = viewport_v / zm.f32x4s(@as(f32, @floatFromInt(self.image_height)));
 
     // Calculate the location of the upper left pixel
-    const viewport_upper_left = self.center - zm.F32x4{ 0, 0, focal_length, 0 } - (viewport_u + viewport_v) / zm.f32x4s(2);
+    const viewport_upper_left = self.center - (zm.f32x4s(focal_length) * self.w) - (viewport_u + viewport_v) / zm.f32x4s(2);
     self.pixel00_loc = viewport_upper_left + (self.pixel_delta_u + self.pixel_delta_v) / zm.f32x4s(2);
 }
 
