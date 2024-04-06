@@ -26,7 +26,12 @@ pub fn random_on_hemisphere(rnd: std.rand.Random, normal: zm.F32x4) zm.F32x4 {
 
 /// Returns a random unit vector
 pub fn random_unit_vector(rnd: std.rand.Random) zm.F32x4 {
-    return zm.normalize4(clamped_random_vec(rnd, -1.0, 1.0));
+    while (true) {
+        const p = clamped_random_vec(rnd, -1.0, 1.0);
+        if (zm.dot4(p, p)[0] < 1) {
+            return zm.normalize4(p);
+        }
+    }
 }
 
 /// Returns a random unit vector
