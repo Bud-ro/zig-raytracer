@@ -1,14 +1,24 @@
 const zm = @import("zmath");
 const Ray = @import("../ray.zig");
 const hittable = @import("../hittable/hittable.zig");
+const Lambertian = @import("lambertian.zig");
+const Metal = @import("metal.zig");
+const Dielectric = @import("dielectric.zig");
 
-const IMaterial = @This();
+pub const MaterialType = enum {
+    lambertian,
+    metal,
+    dielectric,
+};
+pub const Material = union(MaterialType) {
+    lambertian: Lambertian,
+    metal: Metal,
+    dielectric: Dielectric,
 
-// The type erased pointer to the hittable implementation
-impl: *anyopaque,
-
-scatterFn: *const fn (*anyopaque, Ray, *hittable.HitRecord, *zm.F32x4, *Ray) bool,
-
-pub fn scatter(iface: *const IMaterial, r: Ray, rec: *hittable.HitRecord, attenuation: *zm.F32x4, scattered: *Ray) bool {
-    return iface.scatterFn(iface.impl, r, rec, attenuation, scattered);
-}
+    pub fn scatter(self: Material, r: Ray, rec: *hittable.HitRecord, attenuation: *zm.F32x4, scattered: *Ray) bool {
+        switch (self) {
+            // We use duck typing and assume that every valid object has a scatter function associated with it
+            inline else => |obj| return obj.scatter(r, rec, attenuation, scattered),
+        }
+    }
+};

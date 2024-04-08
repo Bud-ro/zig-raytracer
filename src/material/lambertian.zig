@@ -6,7 +6,6 @@
 
 const std = @import("std");
 const zm = @import("zmath");
-const IMaterial = @import("material.zig");
 const hittable = @import("../hittable/hittable.zig");
 const Ray = @import("../ray.zig");
 const vector_util = @import("../vector_util.zig");
@@ -18,16 +17,7 @@ rnd: std.rand.Random,
 
 const Lambertian = @This();
 
-pub fn interface(self: *Lambertian) IMaterial {
-    return .{
-        .impl = @as(*anyopaque, @ptrCast(self)),
-        .scatterFn = scatter,
-    };
-}
-
-pub fn scatter(self_opaque: *anyopaque, r_in: Ray, rec: *hittable.HitRecord, attenuation: *zm.F32x4, scattered: *Ray) bool {
-    var self = @as(*Lambertian, @ptrCast(@alignCast(self_opaque)));
-
+pub fn scatter(self: Lambertian, r_in: Ray, rec: *hittable.HitRecord, attenuation: *zm.F32x4, scattered: *Ray) bool {
     _ = r_in; // Incident ray does not matter for scattering
 
     var scatter_direction = rec.normal + vector_util.random_unit_vector(self.rnd);

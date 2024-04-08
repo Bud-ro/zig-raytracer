@@ -1,7 +1,6 @@
 const std = @import("std");
 const vector_util = @import("../vector_util.zig");
 const zm = @import("zmath");
-const IMaterial = @import("material.zig");
 const Ray = @import("../ray.zig");
 const hittable = @import("../hittable/hittable.zig");
 
@@ -12,16 +11,7 @@ ir: f32,
 /// Pass in a reference to a random number generator
 rnd: std.rand.Random,
 
-pub fn interface(self: *Dielectric) IMaterial {
-    return .{
-        .impl = @as(*anyopaque, @ptrCast(self)),
-        .scatterFn = scatter,
-    };
-}
-
-pub fn scatter(self_opaque: *anyopaque, r_in: Ray, rec: *hittable.HitRecord, attenuation: *zm.F32x4, scattered: *Ray) bool {
-    var self = @as(*Dielectric, @ptrCast(@alignCast(self_opaque)));
-
+pub fn scatter(self: Dielectric, r_in: Ray, rec: *hittable.HitRecord, attenuation: *zm.F32x4, scattered: *Ray) bool {
     attenuation.* = zm.F32x4{ 1.0, 1.0, 1.0, 0.0 };
     const refraction_ratio = zm.f32x4s(if (rec.front_face) (1.0 / self.ir) else self.ir);
 

@@ -2,11 +2,12 @@ const std = @import("std");
 const zm = @import("zmath");
 const Interval = @import("../interval.zig");
 const hittable = @import("hittable.zig");
+const Sphere = @import("sphere.zig");
 const Ray = @import("../ray.zig");
 
 const HittableList = @This();
 
-objects: std.ArrayList(hittable.IHittable),
+objects: *std.ArrayList(Sphere),
 
 pub fn interface(self: *HittableList) hittable.IHittable {
     return .{
@@ -15,18 +16,18 @@ pub fn interface(self: *HittableList) hittable.IHittable {
     };
 }
 
-pub fn init(allocator: std.mem.Allocator) HittableList {
-    var hl = HittableList{ .objects = std.ArrayList(hittable.IHittable).init(allocator) };
-    return hl;
-}
+// pub fn init(objects: *std.ArrayList(Sphere)) HittableList {
+//     var hl = HittableList{ .objects = objects };
+//     return hl;
+// }
 
-pub fn deinit(self: HittableList) void {
-    self.objects.deinit();
-}
+// pub fn deinit(self: HittableList) void {
+//     self.objects.deinit();
+// }
 
-pub fn add(self: *HittableList, object: hittable.IHittable) !void {
-    try self.objects.append(object);
-}
+// pub fn add(self: *HittableList, object: hittable.IHittable) !void {
+//     try self.objects.append(object);
+// }
 
 pub fn hit(self_opaque: *anyopaque, r: Ray, interval: Interval, rec: *hittable.HitRecord) bool {
     var self = @as(*HittableList, @alignCast(@ptrCast(self_opaque)));
