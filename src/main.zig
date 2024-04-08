@@ -20,7 +20,7 @@ pub fn main() !void {
     const random = rnd.random();
 
     // Initialize the world
-    var hittable_list = std.ArrayListAligned(Hittable, @alignOf(Hittable)).init(allocator);
+    var hittable_list = std.ArrayList(Hittable).init(allocator);
     defer hittable_list.deinit();
 
     var material_ground = Material{ .lambertian = .{ .albedo = zm.F32x4{ 0.5, 0.5, 0.5, 0.0 }, .rnd = random } };
@@ -87,8 +87,7 @@ pub fn main() !void {
         .focus_dist = 10.0,
     };
 
-    var hittable_slice = try hittable_list.toOwnedSlice();
-    var world = Hittable{ .hittable_list = .{ .objects = &hittable_slice } };
+    var world = Hittable{ .hittable_list = .{ .objects = &hittable_list } };
     // defer world.deinit();
 
     try camera.render(world);

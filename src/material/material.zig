@@ -18,7 +18,7 @@ pub const Material = union(MaterialType) {
     pub fn scatter(self: Material, r: Ray, rec: *hittable.HitRecord, attenuation: *zm.F32x4, scattered: *Ray) bool {
         switch (self) {
             // We use duck typing and assume that every valid object has a scatter function associated with it
-            inline else => |obj| return obj.scatter(r, rec, attenuation, scattered),
+            inline else => |*obj| return obj.scatter(r, rec, attenuation, scattered),
         }
     }
 };

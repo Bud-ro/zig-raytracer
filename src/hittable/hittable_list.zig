@@ -7,7 +7,7 @@ const Ray = @import("../ray.zig");
 
 const HittableList = @This();
 
-objects: *[]hittable.Hittable,
+objects: *std.ArrayList(hittable.Hittable),
 
 // pub fn init(objects: *std.ArrayList(Sphere)) HittableList {
 //     var hl = HittableList{ .objects = objects };
@@ -27,9 +27,9 @@ pub fn hit(self: HittableList, r: Ray, interval: Interval, rec: *hittable.HitRec
     var hit_anything = false;
     var closest_so_far = interval.max;
 
-    for (self.objects.*) |object| {
+    for (self.objects.items) |object| {
         switch (object) {
-            inline else => |obj| {
+            inline else => |*obj| {
                 if (obj.hit(r, Interval.init(interval.min, closest_so_far), &temp_rec)) {
                     hit_anything = true;
                     closest_so_far = temp_rec.t;

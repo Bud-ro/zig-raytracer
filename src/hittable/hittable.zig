@@ -34,7 +34,7 @@ pub const Hittable = union(HittableType) {
 
     pub fn hit(self: Hittable, r: Ray, interval: Interval, rec: *HitRecord) bool {
         switch (self) {
-            inline else => |obj| return obj.hit(r, interval, rec),
+            inline else => |*obj| return obj.hit(r, interval, rec),
         }
     }
 };
