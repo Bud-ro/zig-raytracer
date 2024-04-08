@@ -10,13 +10,6 @@ mat: Material,
 
 const Sphere = @This();
 
-pub fn interface(self: *Sphere) hittable.IHittable {
-    return .{
-        .impl = @as(*anyopaque, @ptrCast(self)),
-        .hitFn = hit,
-    };
-}
-
 pub fn hit(self: Sphere, r: Ray, interval: Interval, rec: *hittable.HitRecord) bool {
     const oc = r.orig - self.center;
     const a = zm.dot4(r.dir, r.dir);

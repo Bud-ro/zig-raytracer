@@ -7,14 +7,7 @@ const Ray = @import("../ray.zig");
 
 const HittableList = @This();
 
-objects: *std.ArrayList(Sphere),
-
-pub fn interface(self: *HittableList) hittable.IHittable {
-    return .{
-        .impl = @as(*anyopaque, @ptrCast(self)),
-        .hitFn = hit,
-    };
-}
+objects: *[]hittable.Hittable,
 
 // pub fn init(objects: *std.ArrayList(Sphere)) HittableList {
 //     var hl = HittableList{ .objects = objects };
@@ -29,18 +22,20 @@ pub fn interface(self: *HittableList) hittable.IHittable {
 //     try self.objects.append(object);
 // }
 
-pub fn hit(self_opaque: *anyopaque, r: Ray, interval: Interval, rec: *hittable.HitRecord) bool {
-    var self = @as(*HittableList, @alignCast(@ptrCast(self_opaque)));
-
+pub fn hit(self: HittableList, r: Ray, interval: Interval, rec: *hittable.HitRecord) bool {
     var temp_rec: hittable.HitRecord = undefined;
     var hit_anything = false;
     var closest_so_far = interval.max;
 
-    for (self.objects.items) |object| {
-        if (object.hit(r, Interval.init(interval.min, closest_so_far), &temp_rec)) {
-            hit_anything = true;
-            closest_so_far = temp_rec.t;
-            rec.* = temp_rec;
+    for (self.objects.*) |object| {
+        switch (object) {
+            inline else => |obj| {
+                if (obj.hit(r, Interval.init(interval.min, closest_so_far), &temp_rec)) {
+                    hit_anything = true;
+                    closest_so_far = temp_rec.t;
+                    rec.* = temp_rec;
+                }
+            },
         }
     }
 

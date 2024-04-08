@@ -3,13 +3,13 @@
 //! -z pointing into the viewport, positive y upwards, and positive x pointing to the right
 
 const std = @import("std");
-const hittable = @import("hittable/hittable.zig");
+const Hittable = @import("hittable/hittable.zig").Hittable;
+const HitRecord = @import("hittable/hittable.zig").HitRecord;
 const zm = @import("zmath");
 const Ray = @import("ray.zig");
 const Interval = @import("interval.zig");
 const color_util = @import("color_util.zig");
 const vector_util = @import("vector_util.zig");
-const IMaterial = @import("/material/material.zig");
 
 const Camera = @This();
 
@@ -57,7 +57,7 @@ defocus_disk_u: zm.F32x4 = undefined,
 // Defocus Disk vertical radius
 defocus_disk_v: zm.F32x4 = undefined,
 
-pub fn render(self: *Camera, world: hittable.IHittable) !void {
+pub fn render(self: *Camera, world: Hittable) !void {
     initialize(self);
 
     const stdout_file = std.io.getStdOut().writer();
@@ -150,8 +150,8 @@ fn pixel_sample_square(self: *Camera) zm.F32x4 {
     return (px * self.pixel_delta_u) + (py * self.pixel_delta_v);
 }
 
-fn ray_color(self: *Camera, r: Ray, depth: usize, world: hittable.IHittable) zm.F32x4 {
-    var rec: hittable.HitRecord = undefined;
+fn ray_color(self: *Camera, r: Ray, depth: usize, world: Hittable) zm.F32x4 {
+    var rec: HitRecord = undefined;
 
     if (depth <= 0) {
         return zm.F32x4{ 0, 0, 0, 0 };

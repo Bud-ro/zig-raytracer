@@ -2,6 +2,8 @@ const zm = @import("zmath");
 const Ray = @import("../ray.zig");
 const Interval = @import("../interval.zig");
 const Material = @import("../material/material.zig").Material;
+const Sphere = @import("sphere.zig");
+const HittableList = @import("hittable_list.zig");
 
 pub const HitRecord = struct {
     p: zm.F32x4,
@@ -22,13 +24,17 @@ pub const HitRecord = struct {
     }
 };
 
-pub const IHittable = struct {
-    // The type erased pointer to the hittable implementation
-    impl: *anyopaque,
+pub const HittableType = enum {
+    sphere,
+    hittable_list,
+};
+pub const Hittable = union(HittableType) {
+    sphere: Sphere,
+    hittable_list: HittableList,
 
-    hitFn: *const fn (*anyopaque, Ray, Interval, *HitRecord) bool,
-
-    pub fn hit(iface: *const IHittable, r: Ray, interval: Interval, rec: *HitRecord) bool {
-        return iface.hitFn(iface.impl, r, interval, rec);
+    pub fn hit(self: Hittable, r: Ray, interval: Interval, rec: *HitRecord) bool {
+        switch (self) {
+            inline else => |obj| return obj.hit(r, interval, rec),
+        }
     }
 };
