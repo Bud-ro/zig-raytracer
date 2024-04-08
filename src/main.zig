@@ -80,7 +80,7 @@ pub fn main() !void {
     var camera: Camera = .{
         .aspect_ratio = 16.0 / 9.0,
         .image_width = 1200,
-        .samples_per_pixel = 5,
+        .samples_per_pixel = 50,
         .max_depth = 50,
         .rnd = random,
         .vfov = 20,
