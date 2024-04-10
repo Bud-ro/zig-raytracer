@@ -13,8 +13,8 @@ pub fn main() !void {
     const start_time = std.time.milliTimestamp();
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
     var rnd = std.rand.DefaultPrng.init(@intCast(std.time.microTimestamp()));
     const random = rnd.random();
@@ -90,7 +90,7 @@ pub fn main() !void {
     var world = Hittable{ .hittable_list = .{ .objects = &hittable_list } };
     // defer world.deinit();
 
-    try camera.render(world);
+    try camera.render(&world, allocator);
 
     const stderr_file = std.io.getStdErr().writer();
     var bw_err = std.io.bufferedWriter(stderr_file);

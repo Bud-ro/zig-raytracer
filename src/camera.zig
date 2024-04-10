@@ -57,7 +57,7 @@ defocus_disk_u: zm.F32x4 = undefined,
 // Defocus Disk vertical radius
 defocus_disk_v: zm.F32x4 = undefined,
 
-pub fn render(self: *Camera, world: Hittable) !void {
+pub fn render(self: *Camera, world: *Hittable, allocator: std.mem.Allocator) !void {
     initialize(self);
 
     const stdout_file = std.io.getStdOut().writer();
@@ -70,9 +70,84 @@ pub fn render(self: *Camera, world: Hittable) !void {
 
     try stdout.print("P3\n{} {}\n255\n", .{ self.image_width, self.image_height });
 
-    for (0..self.image_height) |j| {
-        try stderr.print("\rScanlines remaining {} ", .{self.image_height - j});
-        try bw_err.flush();
+    // Begin multi-threaded pixel color calculation
+    // Performance seems to increase when
+    // there are more threads than CPUs
+    // Possibly better due to better data locality
+    const cpus = try std.Thread.getCpuCount() * 4;
+
+    var handles = try allocator.alloc(std.Thread, cpus);
+    defer allocator.free(handles);
+
+    const rows_per_partition = self.image_height / cpus; // In rows
+
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+
+    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
+    defer arena.deinit();
+    var arena_allocator = arena.allocator();
+
+    var pixel_data = std.ArrayList([]zm.F32x4).init(arena_allocator);
+
+    // Split the work into partitions by line (with the last one picking up any remainder)
+    for (0..(cpus - 1)) |i| {
+        var pixel_data_allocated = try arena_allocator.alloc(zm.F32x4, rows_per_partition * self.image_width);
+        try pixel_data.append(pixel_data_allocated);
+        handles[i] = try std.Thread.spawn(.{}, get_line_colors, .{
+            self,
+            &pixel_data.items[i],
+            rows_per_partition * i,
+            rows_per_partition * (i + 1),
+            world,
+            false,
+        });
+    }
+
+    var pixel_data_allocated = try arena_allocator.alloc(zm.F32x4, (self.image_height - rows_per_partition * (cpus - 1)) * self.image_width);
+    try pixel_data.append(pixel_data_allocated);
+    handles[cpus - 1] = try std.Thread.spawn(.{}, get_line_colors, .{
+        self,
+        &pixel_data.items[cpus - 1],
+        rows_per_partition * (cpus - 1),
+        self.image_height,
+        world,
+        true, // Thread with the most lines will print out progress report
+    });
+
+    for (0..cpus) |i| {
+        handles[i].join();
+    }
+
+    for (pixel_data.items) |pixels| {
+        for (pixels) |pixel_color| {
+            try color_util.writeColor(stdout, pixel_color, self.samples_per_pixel);
+        }
+    }
+
+    try stderr.print("\rDone.                    \n ", .{});
+    try bw_err.flush();
+    try bw_out.flush(); // Flush the rest of the output!
+}
+
+// Lower index is inclusive, upper index is exclusive
+fn get_line_colors(
+    self: *Camera,
+    pixel_data: *[]zm.F32x4,
+    lower_line_idx: usize,
+    upper_line_idx: usize,
+    world: *Hittable,
+    print_progress: bool,
+) !void {
+    const stderr_file = std.io.getStdErr().writer();
+    var bw_err = std.io.bufferedWriter(stderr_file);
+    const stderr = bw_err.writer();
+
+    for (lower_line_idx..upper_line_idx) |j| {
+        if (print_progress) {
+            try stderr.print("\rScanlines remaining {} ", .{upper_line_idx - j});
+            try bw_err.flush();
+        }
         for (0..self.image_width) |i| {
             var pixel_color = zm.f32x4s(0.0);
             for (0..self.samples_per_pixel) |sample| {
@@ -80,14 +155,9 @@ pub fn render(self: *Camera, world: Hittable) !void {
                 var r = get_ray(self, i, j);
                 pixel_color += ray_color(self, r, self.max_depth, world);
             }
-
-            try color_util.writeColor(stdout, pixel_color, self.samples_per_pixel);
+            pixel_data.*[(j - lower_line_idx) * (self.image_width) + i] = pixel_color;
         }
     }
-
-    try stderr.print("\rDone.                    \n ", .{});
-    try bw_err.flush(); // Flush the rest of the output!
-    try bw_out.flush();
 }
 
 fn initialize(self: *Camera) void {
@@ -150,7 +220,7 @@ fn pixel_sample_square(self: *Camera) zm.F32x4 {
     return (px * self.pixel_delta_u) + (py * self.pixel_delta_v);
 }
 
-fn ray_color(self: *Camera, r: Ray, depth: usize, world: Hittable) zm.F32x4 {
+fn ray_color(self: *Camera, r: Ray, depth: usize, world: *Hittable) zm.F32x4 {
     var rec: HitRecord = undefined;
 
     if (depth <= 0) {
