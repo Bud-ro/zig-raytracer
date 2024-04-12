@@ -7,20 +7,19 @@ const Ray = @import("../ray.zig");
 
 const HittableList = @This();
 
-objects: *std.ArrayList(hittable.Hittable),
+objects: std.ArrayList(hittable.Hittable),
 
-// pub fn init(objects: *std.ArrayList(Sphere)) HittableList {
-//     var hl = HittableList{ .objects = objects };
-//     return hl;
-// }
+pub fn init(self: *HittableList, allocator: std.mem.Allocator) void {
+    self.*.objects = std.ArrayList(hittable.Hittable).init(allocator);
+}
 
-// pub fn deinit(self: HittableList) void {
-//     self.objects.deinit();
-// }
+pub fn deinit(self: HittableList) void {
+    self.objects.deinit();
+}
 
-// pub fn add(self: *HittableList, object: hittable.IHittable) !void {
-//     try self.objects.append(object);
-// }
+pub fn add(self: *HittableList, object: hittable.Hittable) !void {
+    try self.objects.append(object);
+}
 
 pub fn hit(self: HittableList, r: Ray, interval: Interval, rec: *hittable.HitRecord) bool {
     var temp_rec: hittable.HitRecord = undefined;

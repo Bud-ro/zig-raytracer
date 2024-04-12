@@ -20,12 +20,13 @@ pub fn main() !void {
     const random = rnd.random();
 
     // Initialize the world
-    var hittable_list = std.ArrayList(Hittable).init(allocator);
-    defer hittable_list.deinit();
+    var world = Hittable{ .hittable_list = undefined };
+    world.hittable_list.init(allocator);
+    defer world.hittable_list.deinit();
 
     var material_ground = Material{ .lambertian = .{ .albedo = zm.F32x4{ 0.5, 0.5, 0.5, 0.0 }, .rnd = random } };
     var ground_sphere = Hittable{ .sphere = .{ .center = zm.F32x4{ 0.0, -1000, 0, 0.0 }, .radius = zm.f32x4s(1000), .mat = material_ground } };
-    try hittable_list.append(ground_sphere);
+    try world.hittable_list.add(ground_sphere);
 
     var a: i32 = -11;
     while (a < 11) {
@@ -47,32 +48,32 @@ pub fn main() !void {
                     const albedo = color_util.random_color(random) * color_util.random_color(random);
                     const material = Material{ .lambertian = .{ .albedo = albedo, .rnd = random } };
                     var sphere = Hittable{ .sphere = .{ .center = center, .radius = zm.f32x4s(0.2), .mat = material } };
-                    try hittable_list.append(sphere);
+                    try world.hittable_list.add(sphere);
                 } else if (choose_mat < 0.95) {
                     // Metal
                     const albedo = color_util.random_color_range(random, 0.5, 1.0);
                     const fuzz = rand_range(random, 0, 0.5);
                     const material = Material{ .metal = .{ .albedo = albedo, .fuzz = fuzz, .rnd = random } };
                     var sphere = Hittable{ .sphere = .{ .center = center, .radius = zm.f32x4s(0.2), .mat = material } };
-                    try hittable_list.append(sphere);
+                    try world.hittable_list.add(sphere);
                 } else {
                     // Glass
                     const material = Material{ .dielectric = .{ .ir = 1.5, .rnd = random } };
                     var sphere = Hittable{ .sphere = .{ .center = center, .radius = zm.f32x4s(0.2), .mat = material } };
-                    try hittable_list.append(sphere);
+                    try world.hittable_list.add(sphere);
                 }
             }
         }
     }
 
     const material1 = Material{ .dielectric = .{ .ir = 1.5, .rnd = random } };
-    try hittable_list.append(Hittable{ .sphere = .{ .center = zm.F32x4{ 0, 1, 0, 0 }, .radius = zm.f32x4s(1.0), .mat = material1 } });
+    try world.hittable_list.add(Hittable{ .sphere = .{ .center = zm.F32x4{ 0, 1, 0, 0 }, .radius = zm.f32x4s(1.0), .mat = material1 } });
 
     const material2 = Material{ .lambertian = .{ .albedo = zm.F32x4{ 0.4, 0.2, 0.1, 0 }, .rnd = random } };
-    try hittable_list.append(Hittable{ .sphere = .{ .center = zm.F32x4{ -4, 1, 0, 0 }, .radius = zm.f32x4s(1.0), .mat = material2 } });
+    try world.hittable_list.add(Hittable{ .sphere = .{ .center = zm.F32x4{ -4, 1, 0, 0 }, .radius = zm.f32x4s(1.0), .mat = material2 } });
 
     const material3 = Material{ .metal = .{ .albedo = zm.F32x4{ 0.7, 0.6, 0.5, 0.0 }, .fuzz = 0.0, .rnd = random } };
-    try hittable_list.append(Hittable{ .sphere = .{ .center = zm.F32x4{ 4, 1, 0, 0 }, .radius = zm.f32x4s(1.0), .mat = material3 } });
+    try world.hittable_list.add(Hittable{ .sphere = .{ .center = zm.F32x4{ 4, 1, 0, 0 }, .radius = zm.f32x4s(1.0), .mat = material3 } });
 
     var camera: Camera = .{
         .aspect_ratio = 16.0 / 9.0,
@@ -86,9 +87,6 @@ pub fn main() !void {
         .defocus_angle = 0.6,
         .focus_dist = 10.0,
     };
-
-    var world = Hittable{ .hittable_list = .{ .objects = &hittable_list } };
-    // defer world.deinit();
 
     try camera.render(&world, allocator);
 
