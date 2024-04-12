@@ -119,9 +119,12 @@ pub fn render(self: *Camera, world: *Hittable, allocator: std.mem.Allocator) !vo
         handles[i].join();
     }
 
+    // Scale the pixel color by the number of samples
+    const scale: f32 = 1.0 / @as(f32, @floatFromInt(self.samples_per_pixel));
+
     for (pixel_data.items) |pixels| {
-        for (pixels) |pixel_color| {
-            try color_util.writeColor(stdout, pixel_color, self.samples_per_pixel);
+        for (pixels) |*pixel_color| {
+            try color_util.writeColor(stdout, pixel_color.* * zm.f32x4s(scale));
         }
     }
 

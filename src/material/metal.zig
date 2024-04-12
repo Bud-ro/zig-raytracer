@@ -21,5 +21,5 @@ pub fn scatter(self: Metal, r_in: Ray, rec: *hittable.HitRecord, attenuation: *z
     const reflected = vector_util.reflect(zm.normalize4(r_in.dir), rec.normal);
     scattered.* = Ray{ .orig = rec.p, .dir = reflected + zm.f32x4s(self.fuzz) * vector_util.random_unit_vector(self.rnd) };
     attenuation.* = self.albedo;
-    return zm.all(zm.dot4(scattered.dir, rec.normal) > zm.f32x4s(0), 4);
+    return zm.dot4(scattered.dir, rec.normal)[0] > 0;
 }

@@ -46,7 +46,7 @@ pub fn random_in_unit_disk(rnd: std.rand.Random) zm.F32x4 {
 
 pub fn near_zero(vec: zm.F32x4) bool {
     const s: comptime_float = 1e-8;
-    return (zm.all(vec < zm.f32x4s(s), 4));
+    return (zm.dot4(vec, vec)[0] < s);
 }
 
 pub fn reflect(v: zm.F32x4, n: zm.F32x4) zm.F32x4 {

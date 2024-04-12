@@ -17,17 +17,14 @@ pub fn random_color_range(rnd: std.rand.Random, min: f32, max: f32) zm.F32x4 {
     return zm.f32x4(rand_range(rnd, min, max), rand_range(rnd, min, max), rand_range(rnd, min, max), 0.0);
 }
 
-pub fn writeColor(out: anytype, pixel_color: zm.F32x4, samples_per_pixel: usize) !void {
+pub fn writeColor(out: anytype, pixel_color: zm.F32x4) !void {
     const r = pixel_color[0];
     const g = pixel_color[1];
     const b = pixel_color[2];
 
-    // Scale the pixel color by the number of samples
-    const scale: f32 = 1.0 / @as(f32, @floatFromInt(samples_per_pixel));
-
-    const ir: f32 = std.math.clamp(r * scale, 0.000, 0.999);
-    const ig: f32 = std.math.clamp(g * scale, 0.000, 0.999);
-    const ib: f32 = std.math.clamp(b * scale, 0.000, 0.999);
+    const ir: f32 = std.math.clamp(r, 0.000, 0.999);
+    const ig: f32 = std.math.clamp(g, 0.000, 0.999);
+    const ib: f32 = std.math.clamp(b, 0.000, 0.999);
 
     try out.print("{} {} {}\n", .{
         @as(i16, @intFromFloat(256 * linear_to_gamma(ir))),
