@@ -18,8 +18,6 @@ rnd: std.rand.Random,
 const Lambertian = @This();
 
 pub fn scatter(self: Lambertian, r_in: Ray, rec: *hittable.HitRecord, attenuation: *zm.F32x4, scattered: *Ray) bool {
-    _ = r_in; // Incident ray does not matter for scattering
-
     var scatter_direction = rec.normal + vector_util.random_unit_vector(self.rnd);
 
     // Catch degenerate scatter direction
@@ -27,7 +25,7 @@ pub fn scatter(self: Lambertian, r_in: Ray, rec: *hittable.HitRecord, attenuatio
         scatter_direction = rec.normal;
     }
 
-    scattered.* = Ray{ .orig = rec.p, .dir = scatter_direction };
+    scattered.* = Ray{ .orig = rec.p, .dir = scatter_direction, .tm = r_in.tm };
     attenuation.* = self.albedo;
 
     // We choose to always scatter, but we could either scatter with probability p, or achieve

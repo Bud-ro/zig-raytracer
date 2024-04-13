@@ -73,7 +73,7 @@ pub fn render(self: *Camera, world: *Hittable, allocator: std.mem.Allocator) !vo
     // Begin multi-threaded pixel color calculation
     // Performance seems to increase when
     // there are more threads than CPUs
-    // Possibly better due to better data locality
+    // probably because of hyperthreading?
     const cpus = try std.Thread.getCpuCount() * 4;
 
     var handles = try allocator.alloc(std.Thread, cpus);
@@ -206,8 +206,9 @@ fn get_ray(self: *Camera, i: usize, j: usize) Ray {
 
     var ray_origin = if (self.defocus_angle <= 0) self.center else defocus_disk_sample(self);
     const ray_direction = pixel_sample - ray_origin;
+    const ray_time = self.rnd.float(f32);
 
-    return Ray{ .orig = ray_origin, .dir = ray_direction };
+    return Ray{ .orig = ray_origin, .dir = ray_direction, .tm = ray_time };
 }
 
 pub fn defocus_disk_sample(self: *Camera) zm.F32x4 {

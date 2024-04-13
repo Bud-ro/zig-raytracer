@@ -27,7 +27,7 @@ pub fn scatter(self: Dielectric, r_in: Ray, rec: *hittable.HitRecord, attenuatio
     else
         vector_util.refract(unit_direction, rec.normal, refraction_ratio);
 
-    scattered.* = Ray{ .orig = rec.p, .dir = direction };
+    scattered.* = Ray{ .orig = rec.p, .dir = direction, .tm = r_in.tm };
     return true;
 }
 
